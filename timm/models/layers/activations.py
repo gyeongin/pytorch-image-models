@@ -78,7 +78,11 @@ else:
     def swish(x, inplace: bool = False):
         """Swish - Described in: https://arxiv.org/abs/1710.05941
         """
-        return x.mul_(x.sigmoid()) if inplace else x.mul(x.sigmoid())
+        if inplace:
+            x *= torch.sigmoid(x)
+            return x
+        else:
+            return x.mul(torch.sigmoid(x))
 
 
     def mish(x, _inplace: bool = False):
@@ -106,7 +110,7 @@ class Mish(nn.Module):
 
 
 def sigmoid(x, inplace: bool = False):
-    return x.sigmoid_() if inplace else x.sigmoid()
+    return torch.sigmoid(x, out=x) if inplace else torch.sigmoid(x)
 
 
 # PyTorch has this, but not with a consistent inplace argmument interface
@@ -116,7 +120,7 @@ class Sigmoid(nn.Module):
         self.inplace = inplace
 
     def forward(self, x):
-        return x.sigmoid_() if self.inplace else x.sigmoid()
+        return torch.sigmoid(x, out=x) if self.inplace else torch.sigmoid(x)
 
 
 def tanh(x, inplace: bool = False):
@@ -134,8 +138,13 @@ class Tanh(nn.Module):
 
 
 def hard_swish(x, inplace: bool = False):
-    inner = F.relu6(x + 3.).div_(6.)
-    return x.mul_(inner) if inplace else x.mul(inner)
+    inner = F.relu6(x + 3.)
+    inner /= 6.
+    if inplace:
+        x *= inner
+        return x
+    else:
+        return x.mul(inner)
 
 
 class HardSwish(nn.Module):
