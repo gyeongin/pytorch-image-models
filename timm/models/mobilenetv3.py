@@ -135,7 +135,7 @@ class MobileNetV3(nn.Module):
 
     def forward(self, x):
         x = self.forward_features(x)
-        x = x.flatten(1)
+        x = torch.flatten(x, 1)
         if self.drop_rate > 0.:
             x = F.dropout(x, p=self.drop_rate, training=self.training)
         return self.classifier(x)
