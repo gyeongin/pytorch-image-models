@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from typing import Union, List, Tuple, Optional, Callable
 import math
 
-from .padding import get_padding, pad_same, is_static_pad
+from .padding import get_padding, pad_same, is_static_pad, get_same_padding
 
 
 def conv2d_same(
@@ -26,9 +26,25 @@ class Conv2dSame(nn.Conv2d):
                  padding=0, dilation=1, groups=1, bias=True):
         super(Conv2dSame, self).__init__(
             in_channels, out_channels, kernel_size, stride, 0, dilation, groups, bias)
+        self.initialized = False
 
     def forward(self, x):
-        return conv2d_same(x, self.weight, self.bias, self.stride, self.padding, self.dilation, self.groups)
+        if not self.initialized:
+            self.initialize(x)
+        x = self.pad(x)
+
+        return super(Conv2dSame, self).forward(x)
+
+    @torch.jit.unused
+    def initialize(self, x):
+        # assume that this module always gets the same input shape
+        ih, iw = x.size()[-2:]
+        k = self.weight.shape[-2:]
+        s = self.stride
+        d = self.dilation
+        pad_h, pad_w = get_same_padding(ih, k[0], s[0], d[0]), get_same_padding(iw, k[1], s[1], d[1])
+        self.pad = nn.ZeroPad2d((pad_w // 2, pad_w - pad_w // 2, pad_h // 2, pad_h - pad_h // 2))
+        self.initialized = True
 
 
 def get_padding_value(padding, kernel_size, **kwargs) -> Tuple[Tuple, bool]:
