@@ -32,8 +32,8 @@ class Conv2dSame(nn.Conv2d):
         if not self.initialized:
             self.initialize(x)
         x = self.pad(x)
-
-        return super(Conv2dSame, self).forward(x)
+        # This assumes that torch.nn.Conv2d.forward() is a wrapper of torch.nn.Conv2d.conv2d_forward().
+        return self.conv2d_forward(x, self.weight)
 
     @torch.jit.unused
     def initialize(self, x):
