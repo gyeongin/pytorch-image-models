@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 from .layers.activations import sigmoid
-from .layers import create_conv2d, drop_path
+from .layers import create_conv2d, DropPath
 
 
 # Defaults used for Google/Tensorflow training of mobile networks /w RMSprop as per
@@ -148,6 +148,7 @@ class DepthwiseSeparableConv(nn.Module):
         self.has_residual = (stride == 1 and in_chs == out_chs) and not noskip
         self.has_pw_act = pw_act  # activation after point-wise conv
         self.drop_path_rate = drop_path_rate
+        self.drop_path = DropPath(drop_path_rate)
 
         self.conv_dw = create_conv2d(
             in_chs, in_chs, dw_kernel_size, stride=stride, dilation=dilation, padding=pad_type, depthwise=True)
@@ -188,7 +189,7 @@ class DepthwiseSeparableConv(nn.Module):
 
         if self.has_residual:
             if self.drop_path_rate > 0.:
-                x = drop_path(x, self.drop_path_rate, self.training)
+                x = drop_path(x)
             x += residual
         return x
 
@@ -208,6 +209,7 @@ class InvertedResidual(nn.Module):
         has_se = se_ratio is not None and se_ratio > 0.
         self.has_residual = (in_chs == out_chs and stride == 1) and not noskip
         self.drop_path_rate = drop_path_rate
+        self.drop_path = DropPath(drop_path_rate)
 
         # Point-wise expansion
         self.conv_pw = create_conv2d(in_chs, mid_chs, exp_kernel_size, padding=pad_type, **conv_kwargs)
@@ -266,7 +268,7 @@ class InvertedResidual(nn.Module):
 
         if self.has_residual:
             if self.drop_path_rate > 0.:
-                x = drop_path(x, self.drop_path_rate, self.training)
+                x = drop_path(x)
             x += residual
 
         return x
@@ -320,7 +322,7 @@ class CondConvResidual(InvertedResidual):
 
         if self.has_residual:
             if self.drop_path_rate > 0.:
-                x = drop_path(x, self.drop_path_rate, self.training)
+                x = drop_path(x)
             x += residual
         return x
 
@@ -341,6 +343,7 @@ class EdgeResidual(nn.Module):
         has_se = se_ratio is not None and se_ratio > 0.
         self.has_residual = (in_chs == out_chs and stride == 1) and not noskip
         self.drop_path_rate = drop_path_rate
+        self.drop_path = DropPath(drop_path_rate)
 
         # Expansion convolution
         self.conv_exp = create_conv2d(in_chs, mid_chs, exp_kernel_size, padding=pad_type)
@@ -388,7 +391,7 @@ class EdgeResidual(nn.Module):
 
         if self.has_residual:
             if self.drop_path_rate > 0.:
-                x = drop_path(x, self.drop_path_rate, self.training)
+                x = drop_path(x)
             x += residual
 
         return x
