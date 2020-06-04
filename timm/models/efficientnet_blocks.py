@@ -189,7 +189,7 @@ class DepthwiseSeparableConv(nn.Module):
 
         if self.has_residual:
             if self.drop_path_rate > 0.:
-                x = drop_path(x)
+                x = self.drop_path(x)
             x += residual
         return x
 
@@ -268,7 +268,7 @@ class InvertedResidual(nn.Module):
 
         if self.has_residual:
             if self.drop_path_rate > 0.:
-                x = drop_path(x)
+                x = self.drop_path(x)
             x += residual
 
         return x
@@ -322,7 +322,7 @@ class CondConvResidual(InvertedResidual):
 
         if self.has_residual:
             if self.drop_path_rate > 0.:
-                x = drop_path(x)
+                x = self.drop_path(x)
             x += residual
         return x
 
@@ -391,7 +391,7 @@ class EdgeResidual(nn.Module):
 
         if self.has_residual:
             if self.drop_path_rate > 0.:
-                x = drop_path(x)
+                x = self.drop_path(x)
             x += residual
 
         return x
